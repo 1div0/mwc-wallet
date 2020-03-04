@@ -38,7 +38,7 @@ use grin_wallet_util::grin_core::core;
 
 use crate::apiwallet::{
 	EncryptedRequest, EncryptedResponse, EncryptionErrorResponse, Foreign,
-	ForeignCheckMiddlewareFn, ForeignRpc, Owner, OwnerRpc, OwnerRpcS,
+	ForeignCheckMiddlewareFn, ForeignRpc, Owner, OwnerRpc, OwnerRpcV2
 };
 use crate::config::{MQSConfig, TorConfig};
 use crate::core::global;
@@ -884,7 +884,7 @@ impl<L, C, K> OwnerAPIHandlerV2<L, C, K>
 
 	async fn call_api(req: Request<Body>, api: Owner<L, C, K>) -> Result<serde_json::Value, Error> {
 	let val: serde_json::Value = parse_body(req).await?;
-	match OwnerRpc::handle_request(&api, val) {
+	match OwnerRpcV2::handle_request(&api, val) {
 		MaybeReply::Reply(r) => Ok(r),
 		MaybeReply::DontReply => {
 			// Since it's http, we need to return something. We return [] because jsonrpc
@@ -1212,70 +1212,70 @@ impl<L, C, K> OwnerAPIHandlerV3<L, C, K>
 	}
 
 	async fn call_api(
-	req: Request<Body>,
-	key: Arc<Mutex<Option<SecretKey>>>,
-	mask: Arc<Mutex<Option<SecretKey>>>,
-	running_foreign: bool,
-	api: Arc<Owner<L, C, K>>,
-) -> Result<serde_json::Value, Error> {
-	let mut val: serde_json::Value = parse_body(req).await?;
-	let mut is_init_secure_api = OwnerV3Helpers::is_init_secure_api(&val);
-	let mut was_encrypted = false;
-	let mut encrypted_req_id = JsonId::StrId(String::from(""));
-	if !is_init_secure_api {
-		if let Err(v) = OwnerV3Helpers::check_encryption_started(key.clone()) {
-			return Ok(v);
-		}
-		let res = OwnerV3Helpers::decrypt_request(key.clone(), &val);
-		match res {
-			Err(e) => return Ok(e),
-			Ok(v) => {
-				encrypted_req_id = v.0.clone();
-				val = v.1;
+		req: Request<Body>,
+		key: Arc<Mutex<Option<SecretKey>>>,
+		mask: Arc<Mutex<Option<SecretKey>>>,
+		running_foreign: bool,
+		api: Arc<Owner<L, C, K>>,
+	) -> Result<serde_json::Value, Error> {
+		let mut val: serde_json::Value = parse_body(req).await?;
+		let mut is_init_secure_api = OwnerV3Helpers::is_init_secure_api(&val);
+		let mut was_encrypted = false;
+		let mut encrypted_req_id = JsonId::StrId(String::from(""));
+		if !is_init_secure_api {
+			if let Err(v) = OwnerV3Helpers::check_encryption_started(key.clone()) {
+				return Ok(v);
 			}
-		}
-		was_encrypted = true;
-	}
-	// check again, in case it was an encrypted call to init_secure_api
-	is_init_secure_api = OwnerV3Helpers::is_init_secure_api(&val);
-	// also need to intercept open/close wallet requests
-	let is_open_wallet = OwnerV3Helpers::is_open_wallet(&val);
-	match OwnerRpcS::handle_request(&*api, val) {
-		MaybeReply::Reply(mut r) => {
-			let (_was_error, unencrypted_intercept) =
-				OwnerV3Helpers::check_error_response(&r.clone());
-			if is_open_wallet && running_foreign {
-				OwnerV3Helpers::update_mask(mask, &r.clone());
-			}
-			if was_encrypted {
-				let res = OwnerV3Helpers::encrypt_response(
-					key.clone(),
-					&encrypted_req_id,
-					&unencrypted_intercept,
-				);
-				r = match res {
-					Ok(v) => v,
-					Err(v) => return Ok(v),
+			let res = OwnerV3Helpers::decrypt_request(key.clone(), &val);
+			match res {
+				Err(e) => return Ok(e),
+				Ok(v) => {
+					encrypted_req_id = v.0.clone();
+					val = v.1;
 				}
 			}
-			// intercept init_secure_api response (after encryption,
-			// in case it was an encrypted call to 'init_api_secure')
-			if is_init_secure_api {
-				OwnerV3Helpers::update_owner_api_shared_key(
-					key.clone(),
-					&unencrypted_intercept,
-					api.shared_key.lock().clone(),
-				);
-			}
-			Ok(r)
+			was_encrypted = true;
 		}
-		MaybeReply::DontReply => {
-			// Since it's http, we need to return something. We return [] because jsonrpc
-			// clients will parse it as an empty batch response.
-			Ok(serde_json::json!([]))
+		// check again, in case it was an encrypted call to init_secure_api
+		is_init_secure_api = OwnerV3Helpers::is_init_secure_api(&val);
+		// also need to intercept open/close wallet requests
+		let is_open_wallet = OwnerV3Helpers::is_open_wallet(&val);
+		match OwnerRpc::handle_request(&*api, val) {
+			MaybeReply::Reply(mut r) => {
+				let (_was_error, unencrypted_intercept) =
+					OwnerV3Helpers::check_error_response(&r.clone());
+				if is_open_wallet && running_foreign {
+					OwnerV3Helpers::update_mask(mask, &r.clone());
+				}
+				if was_encrypted {
+					let res = OwnerV3Helpers::encrypt_response(
+						key.clone(),
+						&encrypted_req_id,
+						&unencrypted_intercept,
+					);
+					r = match res {
+						Ok(v) => v,
+						Err(v) => return Ok(v),
+					}
+				}
+				// intercept init_secure_api response (after encryption,
+				// in case it was an encrypted call to 'init_api_secure')
+				if is_init_secure_api {
+					OwnerV3Helpers::update_owner_api_shared_key(
+						key.clone(),
+						&unencrypted_intercept,
+						api.shared_key.lock().clone(),
+					);
+				}
+				Ok(r)
+			}
+			MaybeReply::DontReply => {
+				// Since it's http, we need to return something. We return [] because jsonrpc
+				// clients will parse it as an empty batch response.
+				Ok(serde_json::json!([]))
+			}
 		}
 	}
-}
 
 	async fn handle_post_request(
 	req: Request<Body>,

@@ -41,7 +41,7 @@ mod foreign_rpc;
 
 mod owner;
 mod owner_rpc;
-mod owner_rpc_s;
+mod owner_rpc_v2;
 
 mod types;
 
@@ -49,11 +49,12 @@ pub use crate::foreign::{Foreign, ForeignCheckMiddleware, ForeignCheckMiddleware
 pub use crate::foreign_rpc::ForeignRpc;
 pub use crate::owner::Owner;
 pub use crate::owner_rpc::OwnerRpc;
-pub use crate::owner_rpc_s::OwnerRpcS;
+pub use crate::owner_rpc_v2::OwnerRpcV2;
 
 pub use crate::foreign_rpc::foreign_rpc as foreign_rpc_client;
 pub use crate::foreign_rpc::run_doctest_foreign;
 pub use crate::owner_rpc::run_doctest_owner;
+pub use crate::owner_rpc_v2::run_doctest_owner_v2;
 
 pub use types::{
 	ECDHPubkey, EncryptedRequest, EncryptedResponse, EncryptionErrorResponse, JsonId, PubAddress,
