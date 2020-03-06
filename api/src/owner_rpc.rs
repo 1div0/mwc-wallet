@@ -21,7 +21,7 @@ use crate::config::{MQSConfig, TorConfig, WalletConfig};
 use crate::core::core::Transaction;
 use crate::core::global;
 use crate::keychain::{Identifier, Keychain};
-use crate::libwallet::slate_versions::v3::TransactionV3;
+use crate::libwallet::slate_versions::v4::TransactionV4;
 use crate::libwallet::{
 	AcctPathMapping, ErrorKind, InitTxArgs, IssueInvoiceTxArgs, NodeClient, NodeHeightResult,
 	OutputCommitMapping, PaymentProof, Slate, StatusMessage, TxLogEntry, VersionedSlate,
@@ -38,8 +38,8 @@ use easy_jsonrpc_mw;
 use grin_wallet_libwallet::proof::proofaddress::ProvableAddress;
 use rand::thread_rng;
 use std::error::Error;
-use std::time::Duration;
 use std::sync::Arc;
+use std::time::Duration;
 
 /// Public definition used to generate Owner jsonrpc api.
 /// Secure version containing wallet lifecycle functions. All calls to this API must be encrypted.
@@ -549,7 +549,7 @@ pub trait OwnerRpc {
 			  },
 			  "version_info": {
 				"block_header_version": 1,
-				"orig_version": 3,
+				"orig_version": 4,
 				"version": 2
 			  }
 			}
@@ -630,7 +630,7 @@ pub trait OwnerRpc {
 			  },
 			  "version_info": {
 				"block_header_version": 1,
-				"orig_version": 3,
+				"orig_version": 4,
 				"version": 2
 			  }
 			}
@@ -706,7 +706,7 @@ pub trait OwnerRpc {
 			  },
 			  "version_info": {
 				"block_header_version": 1,
-				"orig_version": 3,
+				"orig_version": 4,
 				"version": 2
 			  }
 			}
@@ -777,7 +777,7 @@ pub trait OwnerRpc {
 					  },
 					  "version_info": {
 						"block_header_version": 1,
-						"orig_version": 3,
+						"orig_version": 4,
 						"version": 2
 					  }
 				},
@@ -865,7 +865,7 @@ pub trait OwnerRpc {
 			  },
 			  "version_info": {
 				"block_header_version": 1,
-				"orig_version": 3,
+				"orig_version": 4,
 				"version": 2
 			  }
 			}
@@ -898,7 +898,7 @@ pub trait OwnerRpc {
 			"slate": {
 			  "version_info": {
 				"version": 2,
-				"orig_version": 3,
+				"orig_version": 4,
 				"block_header_version": 1
 			  },
 			  "num_participants": 2,
@@ -1142,7 +1142,7 @@ pub trait OwnerRpc {
 	```
 	 */
 	fn finalize_tx(&self, token: Token, slate: VersionedSlate)
-				   -> Result<VersionedSlate, ErrorKind>;
+		-> Result<VersionedSlate, ErrorKind>;
 
 	/**
 	Networked version of [Owner::post_tx](struct.Owner.html#method.post_tx).
@@ -1210,7 +1210,7 @@ pub trait OwnerRpc {
 	```
 	 */
 
-	fn post_tx(&self, token: Token, tx: TransactionV3, fluff: bool) -> Result<(), ErrorKind>;
+	fn post_tx(&self, token: Token, tx: TransactionV4, fluff: bool) -> Result<(), ErrorKind>;
 
 	/**
 	Networked version of [Owner::cancel_tx](struct.Owner.html#method.cancel_tx).
@@ -1347,7 +1347,7 @@ pub trait OwnerRpc {
 		&self,
 		token: Token,
 		tx: &TxLogEntryAPI,
-	) -> Result<Option<TransactionV3>, ErrorKind>;
+	) -> Result<Option<TransactionV4>, ErrorKind>;
 
 	/**
 	Networked version of [Owner::verify_slate_messages](struct.Owner.html#method.verify_slate_messages).
@@ -2186,10 +2186,10 @@ pub trait OwnerRpc {
 }
 
 impl<L, C, K> OwnerRpc for Owner<L, C, K>
-	where
-		L: WalletLCProvider<'static, C, K>,
-		C: NodeClient + 'static,
-		K: Keychain + 'static,
+where
+	L: WalletLCProvider<'static, C, K>,
+	C: NodeClient + 'static,
+	K: Keychain + 'static,
 {
 	fn accounts(&self, token: Token) -> Result<Vec<AcctPathMapping>, ErrorKind> {
 		Owner::accounts(self, (&token.keychain_mask).as_ref()).map_err(|e| e.kind())
@@ -2219,7 +2219,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			refresh_from_node,
 			tx_id,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn retrieve_txs(
@@ -2236,15 +2236,15 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			tx_id,
 			tx_slate_id,
 		)
-			.map_err(|e| e.kind())
-			.map(|(b, tx)| {
-				(
-					b,
-					tx.iter()
-						.map(|t| TxLogEntryAPI::from_txlogemtry(t))
-						.collect(),
-				)
-			})
+		.map_err(|e| e.kind())
+		.map(|(b, tx)| {
+			(
+				b,
+				tx.iter()
+					.map(|t| TxLogEntryAPI::from_txlogemtry(t))
+					.collect(),
+			)
+		})
 	}
 
 	fn retrieve_summary_info(
@@ -2259,7 +2259,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			refresh_from_node,
 			minimum_confirmations,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn init_send_tx(&self, token: Token, args: InitTxArgs) -> Result<VersionedSlate, ErrorKind> {
@@ -2292,7 +2292,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			&Slate::from(in_slate),
 			args,
 		)
-			.map_err(|e| e.kind())?;
+		.map_err(|e| e.kind())?;
 		let version = out_slate.lowest_version();
 		Ok(VersionedSlate::into_version(out_slate, version))
 	}
@@ -2307,7 +2307,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			(&token.keychain_mask).as_ref(),
 			&Slate::from(in_slate),
 		)
-			.map_err(|e| e.kind())?;
+		.map_err(|e| e.kind())?;
 		let version = out_slate.lowest_version();
 		Ok(VersionedSlate::into_version(out_slate, version))
 	}
@@ -2325,7 +2325,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			None, // RPC doesn't support address
 			participant_id,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn cancel_tx(
@@ -2342,7 +2342,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 		&self,
 		token: Token,
 		tx: &TxLogEntryAPI,
-	) -> Result<Option<TransactionV3>, ErrorKind> {
+	) -> Result<Option<TransactionV4>, ErrorKind> {
 		Owner::get_stored_tx(
 			self,
 			(&token.keychain_mask).as_ref(),
@@ -2381,18 +2381,18 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 					.collect(),
 			),
 		)
-			.map(|x| x.map(TransactionV3::from))
-			.map_err(|e| e.kind())
+		.map(|x| x.map(TransactionV4::from))
+		.map_err(|e| e.kind())
 	}
 
-	fn post_tx(&self, token: Token, tx: TransactionV3, fluff: bool) -> Result<(), ErrorKind> {
+	fn post_tx(&self, token: Token, tx: TransactionV4, fluff: bool) -> Result<(), ErrorKind> {
 		Owner::post_tx(
 			self,
 			(&token.keychain_mask).as_ref(),
 			&Transaction::from(tx),
 			fluff,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn verify_slate_messages(&self, token: Token, slate: VersionedSlate) -> Result<(), ErrorKind> {
@@ -2412,7 +2412,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			start_height,
 			delete_unconfirmed,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn node_height(&self, token: Token) -> Result<NodeHeightResult, ErrorKind> {
@@ -2474,7 +2474,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			tor_config,
 			mqs_config,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn create_wallet(
@@ -2497,7 +2497,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			ZeroingString::from(password),
 			None,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn open_wallet(&self, name: Option<String>, password: String) -> Result<Token, ErrorKind> {
@@ -2535,7 +2535,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			ZeroingString::from(new),
 			None,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn delete_wallet(&self, name: Option<String>) -> Result<(), ErrorKind> {
@@ -2549,7 +2549,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			(&token.keychain_mask).as_ref(),
 			Duration::from_millis(frequency as u64),
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn stop_updater(&self) -> Result<(), ErrorKind> {
@@ -2582,7 +2582,7 @@ impl<L, C, K> OwnerRpc for Owner<L, C, K>
 			tx_id,
 			tx_slate_id,
 		)
-			.map_err(|e| e.kind())
+		.map_err(|e| e.kind())
 	}
 
 	fn verify_payment_proof(

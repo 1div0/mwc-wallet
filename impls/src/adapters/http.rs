@@ -173,10 +173,12 @@ impl HttpDataSender {
 			return Err(ErrorKind::ClientCallback(report).into());
 		}
 
+		if supported_slate_versions.contains(&"V4".to_owned()) {
+			return Ok(SlateVersion::V4);
+		}
 		if supported_slate_versions.contains(&"V3B".to_owned()) {
 			return Ok(SlateVersion::V3B);
 		}
-
 		if supported_slate_versions.contains(&"V3".to_owned()) {
 			return Ok(SlateVersion::V3);
 		}
@@ -377,14 +379,33 @@ impl HttpDataSender {
 	}
 }
 
+#[deprecated(
+since = "3.0.0",
+note = "Remember to handle SlateV4 incompatibilities here"
+)]
 impl SlateSender for HttpDataSender {
 	fn send_tx(&self, slate: &Slate) -> Result<Slate, Error> {
 		// we need to keep _tor in scope so that the process is not killed by drop.
 		let (url_str, _tor) = self.set_up_tor_send_process()?;
 
 		let slate_send = match self.check_other_version(&url_str, None)? {
-			SlateVersion::V3B => VersionedSlate::into_version(slate.clone(), SlateVersion::V3),
-			SlateVersion::V2 | SlateVersion::V3 => {
+			SlateVersion::V4 => VersionedSlate::into_version(slate.clone(), SlateVersion::V4),
+			SlateVersion::V3B => {
+				let mut slate = slate.clone();
+				slate.version_info.version = 3;
+				slate.version_info.orig_version = 3;
+				VersionedSlate::into_version(slate.clone(), SlateVersion::V3)
+			},
+			SlateVersion::V3 => {
+				let mut slate = slate.clone();
+				if slate.payment_proof.is_some() {
+					return Err(ErrorKind::ClientCallback("Payment proof requested, but other wallet does not support payment proofs or tor payment proof. Please urge other user to upgrade, or re-send tx without a payment proof".into()).into());
+				}
+				slate.version_info.version = 3;
+				slate.version_info.orig_version = 3;
+				VersionedSlate::into_version(slate, SlateVersion::V3)
+			}
+			SlateVersion::V2 => {
 				let mut slate = slate.clone();
 				if slate.payment_proof.is_some() {
 					return Err(ErrorKind::ClientCallback("Payment proof requested, but other wallet does not support payment proofs or tor payment proof. Please urge other user to upgrade, or re-send tx without a payment proof".into()).into());

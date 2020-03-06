@@ -31,10 +31,20 @@ impl SlatePutter for PathToSlate {
 			ErrorKind::IO(format!("Unable to create proof file {}, {}", file_name, e))
 		})?;
 		let out_slate = {
-			if slate.payment_proof.is_some() || slate.ttl_cutoff_height.is_some() {
+			// slate.lowest_version()
+			// Mark for https://github.com/mwcproject/mwc-qt-wallet/issues/663
+			if false {
+				warn!("Transaction contains features that require grin-wallet 4.0.0 or later");
+				warn!("Please ensure the other party is running grin-wallet v4.0.0 or later before sending");
+				VersionedSlate::into_version(slate.clone(), SlateVersion::V4)
+			}
+			else if slate.payment_proof.is_some() || slate.ttl_cutoff_height.is_some() {
 				warn!("Transaction contains features that require mwc-wallet 3.0.0 or later");
 				warn!("Please ensure the other party is running mwc-wallet v3.0.0 or later before sending");
-				VersionedSlate::into_version(slate.clone(), SlateVersion::V3)
+				let mut s = slate.clone();
+				s.version_info.version = 3;
+				s.version_info.orig_version = 3;
+				VersionedSlate::into_version(s, SlateVersion::V3)
 			} else {
 				let mut s = slate.clone();
 				s.version_info.version = 2;
