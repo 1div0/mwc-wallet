@@ -24,9 +24,9 @@ use crate::grin_util::secp;
 use crate::grin_util::secp::key::PublicKey;
 use crate::grin_util::secp::pedersen::{Commitment, RangeProof};
 use crate::grin_util::secp::Signature;
-use crate::slate::CompatKernelFeatures;
 use crate::proof::proofaddress;
 use crate::proof::proofaddress::ProvableAddress;
+use crate::slate::CompatKernelFeatures;
 use uuid::Uuid;
 
 use crate::slate_versions::v3::{
@@ -115,13 +115,13 @@ pub struct ParticipantDataV4 {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PaymentInfoV4 {
 	#[serde(
-	serialize_with = "proofaddress::as_string",
-	deserialize_with = "proofaddress::proof_address_from_string"
+		serialize_with = "proofaddress::as_string",
+		deserialize_with = "proofaddress::proof_address_from_string"
 	)]
 	pub sender_address: ProvableAddress,
 	#[serde(
-	serialize_with = "proofaddress::as_string",
-	deserialize_with = "proofaddress::proof_address_from_string"
+		serialize_with = "proofaddress::as_string",
+		deserialize_with = "proofaddress::proof_address_from_string"
 	)]
 	pub receiver_address: ProvableAddress,
 	pub receiver_signature: Option<String>,
@@ -292,7 +292,7 @@ impl From<&ParticipantDataV3> for ParticipantDataV4 {
 impl From<&VersionCompatInfoV3> for VersionCompatInfoV4 {
 	fn from(data: &VersionCompatInfoV3) -> VersionCompatInfoV4 {
 		VersionCompatInfoV4 {
-			version : 4,
+			version: 4,
 			orig_version: data.orig_version,
 			block_header_version: data.block_header_version,
 		}
@@ -459,7 +459,7 @@ impl From<&ParticipantDataV4> for ParticipantDataV3 {
 impl From<&VersionCompatInfoV4> for VersionCompatInfoV3 {
 	fn from(data: &VersionCompatInfoV4) -> VersionCompatInfoV3 {
 		VersionCompatInfoV3 {
-			version : 3,
+			version: 3,
 			orig_version: data.orig_version,
 			block_header_version: data.block_header_version,
 		}

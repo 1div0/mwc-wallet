@@ -380,8 +380,8 @@ impl HttpDataSender {
 }
 
 #[deprecated(
-since = "3.0.0",
-note = "Remember to handle SlateV4 incompatibilities here"
+	since = "3.0.0",
+	note = "Remember to handle SlateV4 incompatibilities here"
 )]
 impl SlateSender for HttpDataSender {
 	fn send_tx(&self, slate: &Slate) -> Result<Slate, Error> {
@@ -395,7 +395,7 @@ impl SlateSender for HttpDataSender {
 				slate.version_info.version = 3;
 				slate.version_info.orig_version = 3;
 				VersionedSlate::into_version(slate.clone(), SlateVersion::V3)
-			},
+			}
 			SlateVersion::V3 => {
 				let mut slate = slate.clone();
 				if slate.payment_proof.is_some() {
@@ -504,7 +504,10 @@ impl SlateSender for HttpDataSender {
 				ErrorKind::GenericError(format!("Unable to build slate from values, {}", e))
 			})?)
 			.map_err(|e| {
-				ErrorKind::GenericError(format!("Unable to build slate from response {}, {}", res_str, e))
+				ErrorKind::GenericError(format!(
+					"Unable to build slate from response {}, {}",
+					res_str, e
+				))
 			})?;
 
 		// //compare the listening wallet proof address retrieved earlier to the returned slate. If they don't match, return error

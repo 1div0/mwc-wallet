@@ -28,6 +28,8 @@ use crate::grin_util::secp::Signature;
 use crate::proof::proofaddress;
 use crate::proof::proofaddress::ProvableAddress;
 use crate::slate::CompatKernelFeatures;
+use crate::slate_versions::v4::{OutputV4, TxKernelV4};
+use crate::types::CbData;
 use uuid::Uuid;
 
 use crate::slate_versions::v2::{
@@ -218,7 +220,6 @@ pub struct CoinbaseV3 {
 	/// Key Id
 	pub key_id: Option<Identifier>,
 }
-
 
 // Coinbase data to versioned.
 impl From<CbData> for CoinbaseV3 {
