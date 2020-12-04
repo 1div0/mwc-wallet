@@ -51,8 +51,8 @@
   },
   "lock_slate": {
     "version_info": {
-      "version": 3,
-      "orig_version": 3,
+      "version": 4,
+      "orig_version": 4,
       "block_header_version": 1
     },
     "num_participants": 2,
@@ -122,8 +122,8 @@
   },
   "refund_slate": {
     "version_info": {
-      "version": 3,
-      "orig_version": 3,
+      "version": 4,
+      "orig_version": 4,
       "block_header_version": 1
     },
     "num_participants": 2,
@@ -184,8 +184,8 @@
   },
   "redeem_slate": {
     "version_info": {
-      "version": 3,
-      "orig_version": 3,
+      "version": 4,
+      "orig_version": 4,
       "block_header_version": 1
     },
     "num_participants": 2,
@@ -271,7 +271,7 @@
         "lock_slate": {
           "version_info": {
             "version": 2,
-            "orig_version": 3,
+            "orig_version": 4,
             "block_header_version": 1
           },
           "num_participants": 2,
@@ -327,7 +327,7 @@
         "refund_slate": {
           "version_info": {
             "version": 2,
-            "orig_version": 3,
+            "orig_version": 4,
             "block_header_version": 1
           },
           "num_participants": 2,

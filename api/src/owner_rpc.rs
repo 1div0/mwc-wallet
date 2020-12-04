@@ -470,7 +470,7 @@ pub trait OwnerRpc {
 			  },
 			  "version_info": {
 				"block_header_version": 1,
-				"orig_version": 3,
+				"orig_version": 4,
 				"version": 3
 			  }
 			}

@@ -20,6 +20,7 @@ use uuid::Uuid;
 use crate::core::core::Transaction;
 use crate::keychain::{Identifier, Keychain};
 use crate::libwallet::slate_versions::v3::TransactionV3;
+use crate::libwallet::slate_versions::v4::TransactionV4;
 use crate::libwallet::{
 	AcctPathMapping, ErrorKind, InitTxArgs, IssueInvoiceTxArgs, NodeClient, NodeHeightResult,
 	OutputCommitMapping, Slate, TxLogEntry, VersionedSlate, WalletInfo, WalletLCProvider,
@@ -566,7 +567,7 @@ pub trait OwnerRpcV2: Sync + Send {
 			  },
 			  "version_info": {
 				"block_header_version": 1,
-				"orig_version": 3,
+				"orig_version": 4,
 				"version": 2
 			  }
 			}
@@ -707,7 +708,7 @@ pub trait OwnerRpcV2: Sync + Send {
 					  },
 					  "version_info": {
 						"block_header_version": 1,
-						"orig_version": 3,
+						"orig_version": 4,
 						"version": 2
 					  }
 				},
@@ -787,7 +788,7 @@ pub trait OwnerRpcV2: Sync + Send {
 			  },
 			  "version_info": {
 				"block_header_version": 1,
-				"orig_version": 3,
+				"orig_version": 4,
 				"version": 2
 			  }
 			}
@@ -817,7 +818,7 @@ pub trait OwnerRpcV2: Sync + Send {
 		"params": [ {
 			  "version_info": {
 				"version": 2,
-				"orig_version": 3,
+				"orig_version": 4,
 				"block_header_version": 1
 			  },
 			  "num_participants": 2,
@@ -906,7 +907,7 @@ pub trait OwnerRpcV2: Sync + Send {
 		{
 		  "version_info": {
 			"version": 2,
-			"orig_version": 3,
+			"orig_version": 4,
 			"block_header_version": 1
 		  },
 		  "num_participants": 2,
@@ -1046,7 +1047,7 @@ pub trait OwnerRpcV2: Sync + Send {
 		  },
 		  "version_info": {
 			"block_header_version": 1,
-			"orig_version": 3,
+			"orig_version": 4,
 			"version": 2
 		  }
 		}
@@ -1308,7 +1309,7 @@ pub trait OwnerRpcV2: Sync + Send {
 					"offset": "d202964900000000d302964900000000d402964900000000d502964900000000"
 				},
 				"version_info": {
-					"orig_version": 3,
+					"orig_version": 4,
 					"version": 3,
 					"block_header_version": 2
 				}
@@ -1531,12 +1532,23 @@ where
 					.collect(),
 			),
 		)
-		.map(|x| x.map(TransactionV3::from))
+		.map(|x| {
+			x.map(|t| {
+				let t = TransactionV4::from(t);
+				TransactionV3::from(t)
+			})
+		})
 		.map_err(|e| e.kind())
 	}
 
 	fn post_tx(&self, tx: TransactionV3, fluff: bool) -> Result<(), ErrorKind> {
-		Owner::post_tx(self, None, &Transaction::from(tx), fluff).map_err(|e| e.kind())
+		Owner::post_tx(
+			self,
+			None,
+			&Transaction::from(TransactionV4::from(tx)),
+			fluff,
+		)
+		.map_err(|e| e.kind())
 	}
 
 	fn verify_slate_messages(&self, slate: VersionedSlate) -> Result<(), ErrorKind> {

@@ -44,6 +44,7 @@ use crate::grin_util::secp::pedersen::{Commitment, RangeProof};
 use crate::grin_util::secp::Signature;
 use crate::slate::CompatKernelFeatures;
 use crate::slate_versions::v3::{OutputV3, TxKernelV3};
+use crate::slate_versions::v4::{OutputV4, TxKernelV4};
 use crate::types::CbData;
 use uuid::Uuid;
 
@@ -245,9 +246,11 @@ pub struct CoinbaseV2 {
 // Coinbase data to versioned.
 impl From<CbData> for CoinbaseV2 {
 	fn from(cb: CbData) -> CoinbaseV2 {
-		let output = OutputV3::from(&cb.output);
+		let output = OutputV4::from(&cb.output);
+		let output = OutputV3::from(&output);
 		let output = OutputV2::from(&output);
-		let kernel = TxKernelV3::from(&cb.kernel);
+		let kernel = TxKernelV4::from(&cb.kernel);
+		let kernel = TxKernelV3::from(&kernel);
 		let kernel = TxKernelV2::from(&kernel);
 		CoinbaseV2 {
 			output,
